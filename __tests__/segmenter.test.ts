@@ -1,4 +1,4 @@
-import { Segmenter, SAMPLE_RATE } from '../src/lib/segmenter';
+import { DEFAULT_SEGMENTER, Segmenter, SAMPLE_RATE } from '../src/lib/segmenter';
 
 function tone(sec: number, amp = 4000): Int16Array {
   const n = Math.round(sec * SAMPLE_RATE);
@@ -33,7 +33,7 @@ describe('Segmenter', () => {
   });
 
   it('cuts long speech at a quiet moment', () => {
-    const s = new Segmenter();
+    const s = new Segmenter({ ...DEFAULT_SEGMENTER, maxSec: 7 });
     const speech = Int16Array.from([...tone(6), ...tone(0.15, 100), ...tone(3)]);
     const ev = feed(s, speech);
     expect(ev.length).toBeGreaterThanOrEqual(1);
