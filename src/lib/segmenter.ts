@@ -13,7 +13,11 @@ const FRAME = 320; // 20 ms
 export interface SegmenterOptions {
   /** Silence after speech that closes a segment (ms). Reciters pause at ayah ends. */
   pauseMs: number;
-  /** Segment length that forces a cut (s). Short segments keep the model fast. */
+  /**
+   * Segment length that forces a cut (s). The model always works on a 30 s
+   * window, so longer segments cost almost nothing extra, while every forced
+   * cut risks splitting a word. Reciters breathe well before 20 s.
+   */
   maxSec: number;
   /** Keep this much audio before speech starts (ms). */
   preRollMs: number;
@@ -21,7 +25,7 @@ export interface SegmenterOptions {
   minSec?: number;
 }
 
-export const DEFAULT_SEGMENTER: SegmenterOptions = { pauseMs: 450, maxSec: 7, preRollMs: 250 };
+export const DEFAULT_SEGMENTER: SegmenterOptions = { pauseMs: 450, maxSec: 20, preRollMs: 250 };
 
 export type SegmentEvent =
   | { type: 'none' }

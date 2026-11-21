@@ -116,7 +116,11 @@ describe('live display', () => {
     expect(t.states()[3].status).toBe('pending');
     expect(t.position).toBe(3);
     t.endSlice();
+    // Still undecided: the word may be cut by the segment end.
+    expect(t.states()[3].status).toBe('pending');
+    t.update(1, 'الله الصمد');
+    t.endSlice();
     expect(t.states()[3]).toEqual({ status: 'wrong', heard: 'واحد' });
-    expect(t.recentText()).toBe('قل هو الله احد');
+    expect(t.recentText()).toBe('قل هو الله احد الله الصمد');
   });
 });

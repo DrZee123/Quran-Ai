@@ -106,7 +106,6 @@ export default function MushafPageScreen() {
         setHeard(text);
         pullStates();
       },
-      getContext: () => tracker.recentText(),
       onTiming: (ms, sec) => setTiming(`${(ms / 1000).toFixed(1)}s / ${sec.toFixed(1)}s awaz`),
       onError: setError,
       onActiveChange: setRecording,

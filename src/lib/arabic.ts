@@ -77,12 +77,27 @@ export function similarity(a: string, b: string): number {
  * Score how well a heard word matches an expected word (both already normalised).
  * 1 = same word, 0 = unrelated.
  */
-export function wordScore(heard: string, expected: string): number {
+function rawScore(heard: string, expected: string): number {
   if (heard === expected) return 1;
   const sk1 = skeleton(heard);
   const sk2 = skeleton(expected);
   if (sk1 === sk2) return 0.95;
   return Math.max(similarity(heard, expected), similarity(sk1, sk2) * 0.95);
+}
+
+export function wordScore(heard: string, expected: string): number {
+  let score = rawScore(heard, expected);
+  // Taa marbuta is pronounced "t" when joined to the next word: "صلاة" may be heard as "صلات".
+  if (score < 1 && heard.endsWith('ت') && expected.endsWith('ه')) {
+    heard = heard.slice(0, -1) + 'ه';
+    score = Math.max(score, rawScore(heard, expected));
+  }
+  // In joined speech the article "ال" is silent ("يقيمون الصلاة" -> "...مونصّلاة"),
+  // so the model often writes the word without it.
+  if (score < 1 && expected.length > 4 && expected.startsWith('ال') && !heard.startsWith('ال')) {
+    return Math.max(score, rawScore(heard, expected.slice(2)) * 0.95);
+  }
+  return score;
 }
 
 /** Threshold above which a heard word counts as correctly recited. */
