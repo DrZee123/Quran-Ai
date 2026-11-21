@@ -75,3 +75,36 @@ describe('RecitationTracker', () => {
     expect(t.states()[0].status).toBe('pending');
   });
 });
+
+import { getPage, pageOf, PAGE_COUNT } from '../src/lib/quran';
+
+describe('mushaf pages', () => {
+  it('maps known pages', () => {
+    expect(getPage(1).sections[0].surah.id).toBe(1);
+    expect(getPage(1).sections[0].ayahs).toHaveLength(7);
+    const p2 = getPage(2);
+    expect(p2.sections[0].surah.id).toBe(2);
+    expect(p2.sections[0].ayahs.map((a) => a.number)).toEqual([1, 2, 3, 4, 5]);
+    const last = getPage(PAGE_COUNT);
+    expect(last.sections.map((s) => s.surah.id)).toEqual([112, 113, 114]);
+    expect(last.sections.every((s) => s.starts)).toBe(true);
+  });
+
+  it('finds the page of an ayah', () => {
+    expect(pageOf(1)).toBe(1);
+    expect(pageOf(2, 6)).toBe(3);
+    expect(pageOf(114)).toBe(604);
+    expect(pageOf(18)).toBe(293);
+  });
+
+  it('a recitation can run across a page boundary', () => {
+    const { getAllNormalized } = require('../src/lib/quran');
+    const all: string[] = getAllNormalized();
+    const p2 = getPage(2);
+    const t = new RecitationTracker(all, p2.end - 3);
+    t.update(0, all.slice(p2.end - 3, p2.end + 4).join(' '));
+    t.finish();
+    expect(t.position).toBe(p2.end + 4);
+    expect(t.mistakes).toBe(0);
+  });
+});

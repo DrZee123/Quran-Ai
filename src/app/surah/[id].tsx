@@ -3,7 +3,7 @@ import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { AyahView, type WordView } from '../../components/AyahView';
-import { getSurah } from '../../lib/quran';
+import { getSurah, pageOf } from '../../lib/quran';
 import { Recognizer } from '../../lib/recognizer';
 import { RecitationTracker, type WordState } from '../../lib/recitation';
 import { colors, quranFont } from '../../theme';
@@ -128,7 +128,18 @@ export default function SurahScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack.Screen options={{ title: `${surah.meta.id}. ${surah.meta.tr}` }} />
+      <Stack.Screen
+        options={{
+          title: `${surah.meta.id}. ${surah.meta.tr}`,
+          headerRight: () => (
+            <Link href={{ pathname: '/page/[n]', params: { n: String(pageOf(surah.meta.id, startAyah)) } }} asChild>
+              <Pressable hitSlop={12}>
+                <Text style={{ color: '#fff', fontSize: 15 }}>Mushaf safha</Text>
+              </Pressable>
+            </Link>
+          ),
+        }}
+      />
       {recording ? <KeepAwake /> : null}
 
       <View style={styles.toolbar}>

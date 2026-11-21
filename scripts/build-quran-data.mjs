@@ -18,3 +18,10 @@ const out = src.map((s) => ({
 writeFileSync(new URL('../src/data/quran.json', import.meta.url), JSON.stringify(out));
 const verses = out.reduce((n, s) => n + s.verses.length, 0);
 console.log(`Wrote ${out.length} surahs, ${verses} verses`);
+
+// Mushaf (Madani, 604 pages) page boundaries from quran-meta (MIT):
+// pages[p - 1] = global 1-based ayah id of the first ayah on page p; last entry is a sentinel (6237).
+const { PageList } = await import('quran-meta/hafs');
+const pages = PageList.slice(1);
+writeFileSync(new URL('../src/data/pages.json', import.meta.url), JSON.stringify(pages));
+console.log(`Wrote ${pages.length - 1} page boundaries`);

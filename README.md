@@ -12,6 +12,7 @@ A free, offline Quran recitation checker for huffaz.
 - Live mic: speech recognition **phone par hi** (whisper.cpp via `whisper.rn`), internet ki zaroorat nahi
 - Word-by-word matching: sahih = hara, ghalat = laal (tap karein to sahih lafz aur jo suna gaya wo nazar aata hai), chhoota = laal underline
 - **Hifz mode**: text chhupa rehta hai aur jaise jaise aap parhte hain, khulta jata hai
+- **Mushaf safha mode**: Quran ka poora safha (604 Madani safhaat). Aap parhte jayen, lafz ek ek karke smooth tareeqe se likhe jate hain; safha khatam hone par agla safha khud khulta hai
 - Kisi bhi ayat se shuru karein; ta'awwudh aur bismillah khud nazar-andaz ho jate hain
 
 ## Kaise kaam karti hai
@@ -59,6 +60,7 @@ Quran data dobara banana ho to: `npm run build:data` (`quran-json` package se `s
 - Quran text: [Tanzil.net](https://tanzil.net) via [quran-json](https://github.com/risan/quran-json) (CC BY 4.0)
 - Speech model: [tarteel-ai/whisper-base-ar-quran](https://huggingface.co/tarteel-ai/whisper-base-ar-quran) (Apache-2.0)
 - [whisper.cpp](https://github.com/ggml-org/whisper.cpp), [whisper.rn](https://github.com/mybigday/whisper.rn) (MIT)
+- Mushaf page boundaries: [quran-meta](https://github.com/quran-center/quran-meta) (MIT)
 - Font: Amiri Quran (OFL)
 
 App ka code MIT license ke tehat hai.
