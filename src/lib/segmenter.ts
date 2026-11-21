@@ -132,9 +132,3 @@ export class Segmenter {
     return event;
   }
 }
-
-/** Encoder window for an audio length: whisper.cpp audio_ctx (1500 = 30 s). Smaller = faster. */
-export function audioCtxFor(samples: number): number {
-  const frames = Math.ceil((samples / SAMPLE_RATE) * 50) + 64;
-  return Math.min(1500, Math.max(256, frames));
-}

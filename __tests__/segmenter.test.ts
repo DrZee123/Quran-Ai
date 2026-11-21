@@ -1,4 +1,4 @@
-import { audioCtxFor, Segmenter, SAMPLE_RATE } from '../src/lib/segmenter';
+import { Segmenter, SAMPLE_RATE } from '../src/lib/segmenter';
 
 function tone(sec: number, amp = 4000): Int16Array {
   const n = Math.round(sec * SAMPLE_RATE);
@@ -44,9 +44,4 @@ describe('Segmenter', () => {
     expect(cutSec).toBeLessThan(6.2);
   });
 
-  it('shrinks the encoder window for short audio', () => {
-    expect(audioCtxFor(SAMPLE_RATE * 2)).toBe(256);
-    expect(audioCtxFor(SAMPLE_RATE * 7)).toBe(414);
-    expect(audioCtxFor(SAMPLE_RATE * 40)).toBe(1500);
-  });
 });

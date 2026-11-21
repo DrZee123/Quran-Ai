@@ -2,7 +2,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import { initWhisper, type WhisperContext } from 'whisper.rn/index';
 import { AudioPcmStreamAdapter } from 'whisper.rn/realtime-transcription/adapters/AudioPcmStreamAdapter';
 import { getActiveModel, modelFile, type SpeechModel } from './models';
-import { audioCtxFor, SAMPLE_RATE, Segmenter } from './segmenter';
+import { SAMPLE_RATE, Segmenter } from './segmenter';
 
 export interface RecognizerCallbacks {
   /**
@@ -40,13 +40,12 @@ async function loadContext(model: SpeechModel): Promise<WhisperContext> {
 }
 
 /** Minimum new audio before re-running the model on a growing segment. */
-const PARTIAL_STEP_SEC = 0.5;
+const PARTIAL_STEP_SEC = 0.8;
 const MIN_PARTIAL_SEC = 0.6;
 
 /**
  * On-device, offline streaming recognition tuned for recitation:
  * - only the audio since the last pause is sent to the model (a few seconds, never 30 s);
- * - the model's encoder window is shrunk to the audio length (much faster on phones);
  * - leading silence is dropped, so the model doesn't invent words on silence;
  * - one model run at a time; finished segments always go first.
  */
@@ -156,10 +155,9 @@ export class Recognizer {
       maxThreads: 4,
       temperature: 0,
       temperatureInc: 0, // no slow re-decoding fallbacks
-      audioCtx: audioCtxFor(audio.length), // see patches/whisper.rn+0.7.4.patch
       prompt: this.cb.getContext?.() || undefined,
     };
-    const { promise } = this.ctx.transcribeData(audio.buffer as ArrayBuffer, options as never);
+    const { promise } = this.ctx.transcribeData(audio.buffer as ArrayBuffer, options);
     const res = await promise;
     this.cb.onTiming?.(Date.now() - t0, audio.length / SAMPLE_RATE);
     return res.result ?? '';

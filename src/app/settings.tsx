@@ -3,6 +3,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import {
   MODELS,
   type SpeechModel,
+  cleanupOldModels,
   deleteModel,
   downloadModel,
   getSelectedModelId,
@@ -19,6 +20,7 @@ export default function Settings() {
   const aborts = useRef<Record<string, AbortController>>({});
 
   useEffect(() => {
+    cleanupOldModels();
     getSelectedModelId().then(setSelected);
   }, []);
 

@@ -4,6 +4,8 @@ name: Convert speech model
 # Publishes the phone-ready model as a GitHub release asset that the app downloads.
 on:
   workflow_dispatch:
+  push:
+    paths: ['scripts/convert_model.sh']
 
 permissions:
   contents: write
@@ -22,7 +24,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view model-v1 >/dev/null 2>&1 || \
-            gh release create model-v1 --title "Speech model v1" \
-              --notes "tarteel-ai/whisper-base-ar-quran (Apache-2.0) converted to whisper.cpp GGML q8_0."
-          gh release upload model-v1 out/ggml-quran-base-q8_0.bin --clobber
+          gh release view model-v2 >/dev/null 2>&1 || \
+            gh release create model-v2 --title "Speech model v1" \
+              --notes "tarteel-ai/whisper-tiny-ar-quran (Apache-2.0) converted to whisper.cpp GGML q8_0."
+          gh release upload model-v2 out/ggml-quran-tiny-q8_0.bin --clobber
