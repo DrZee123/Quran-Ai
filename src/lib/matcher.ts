@@ -1,4 +1,4 @@
-import { MATCH_THRESHOLD, wordScore } from './arabic';
+import { isMatch, wordScore } from './arabic';
 
 export type WordStatus = 'pending' | 'correct' | 'wrong' | 'skipped';
 
@@ -48,7 +48,7 @@ export function align(heard: string[], expected: string[]): AlignmentResult {
     bt[i][0] = 1;
     for (let j = 1; j <= n; j++) {
       const score = wordScore(heard[i - 1], expected[j - 1]);
-      const diag = dp[i - 1][j - 1] + (score >= MATCH_THRESHOLD ? 1 - score : SUB_COST);
+      const diag = dp[i - 1][j - 1] + (isMatch(score, expected[j - 1]) ? 1 - score : SUB_COST);
       const up = dp[i - 1][j] + INS_COST;
       const left = dp[i][j - 1] + DEL_COST;
       // Prefer diagonal on ties: it keeps the reading position moving forward.
@@ -79,7 +79,7 @@ export function align(heard: string[], expected: string[]): AlignmentResult {
     const move = i === 0 ? 2 : j === 0 ? 1 : bt[i][j];
     if (move === 0) {
       const h = heard[i - 1];
-      const ok = wordScore(h, expected[j - 1]) >= MATCH_THRESHOLD;
+      const ok = isMatch(wordScore(h, expected[j - 1]), expected[j - 1]);
       words[j - 1] = ok ? { status: 'correct' } : { status: 'wrong', heard: h };
       i--;
       j--;

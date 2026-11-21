@@ -119,19 +119,42 @@ export class RecitationTracker {
     this.cursor = cursor;
   }
 
+  /** Close the current slice now (the reciter paused): its words become final. */
+  endSlice(): void {
+    this.finish();
+  }
+
+  /**
+   * While a slice is still being heard, only words that clearly match are shown.
+   * Mistakes are decided when the slice is final, so a half-heard word never flashes red.
+   */
+  private liveFrontier(): number {
+    if (!this.live) return this.cursor;
+    let frontier = this.cursor;
+    this.live.states.forEach((s, idx) => {
+      if (s.status === 'correct' && idx + 1 > frontier) frontier = idx + 1;
+    });
+    return frontier;
+  }
+
   /** Index of the next word the reciter is expected to say. */
   get position(): number {
-    return this.live?.cursor ?? this.cursor;
+    return this.liveFrontier();
+  }
+
+  /** Recently recited words (plain text), used as context for the speech model. */
+  recentText(count = 12): string {
+    return this.expected.slice(Math.max(this.startIndex, this.cursor - count), this.cursor).join(' ');
   }
 
   /** Current state of every expected word (committed + live slice overlay). */
   states(): WordState[] {
-    if (!this.live) return this.committed.slice();
     const out = this.committed.slice();
-    this.live.states.forEach((s, idx) => (out[idx] = s));
-    // The word being spoken right now may be half-heard: don't flag it yet.
-    const last = this.live.cursor - 1;
-    if (last >= 0 && out[last] && out[last].status === 'wrong') out[last] = { status: 'pending' };
+    if (!this.live) return out;
+    const frontier = this.liveFrontier();
+    this.live.states.forEach((s, idx) => {
+      if (idx < frontier) out[idx] = s.status === 'correct' ? s : { status: 'pending' };
+    });
     return out;
   }
 
