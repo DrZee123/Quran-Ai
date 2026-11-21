@@ -21,8 +21,6 @@ export interface SegmenterOptions {
   maxSec: number;
   /** Keep this much audio before speech starts (ms). */
   preRollMs: number;
-  /** A pause shorter than 3x pauseMs does not close a segment shorter than this (s). */
-  minSec?: number;
 }
 
 export const DEFAULT_SEGMENTER: SegmenterOptions = { pauseMs: 450, maxSec: 20, preRollMs: 250 };
@@ -110,9 +108,7 @@ export class Segmenter {
       return event;
     }
 
-    const silenceMs = this.silentFrames * 20;
-    const longEnough = this.seconds >= (this.opts.minSec ?? 0) || silenceMs >= this.opts.pauseMs * 3;
-    if (silenceMs >= this.opts.pauseMs && longEnough) {
+    if (this.silentFrames * 20 >= this.opts.pauseMs) {
       event = { type: 'close', audio: this.buf.slice(0, this.len), rest: new Int16Array(0) };
       this.reset(new Int16Array(0));
       return event;

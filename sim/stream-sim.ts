@@ -53,7 +53,6 @@ const opts = {
   ...DEFAULT_SEGMENTER,
   ...(process.env.PAUSE_MS ? { pauseMs: Number(process.env.PAUSE_MS) } : {}),
   ...(process.env.MAX_SEC ? { maxSec: Number(process.env.MAX_SEC) } : {}),
-  ...(process.env.MIN_SEC ? { minSec: Number(process.env.MIN_SEC) } : {}),
 };
 const seg = new Segmenter(opts);
 const tracker = new RecitationTracker(getAllNormalized(), gStart);

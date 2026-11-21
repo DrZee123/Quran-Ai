@@ -41,8 +41,9 @@ run () { # label env... -- wav prompt
   echo; echo "===== $* ====="
   env "$@"
 }
+# "P=0": the app's settings. "MAX_SEC=7 P=1": the old settings, for comparison.
 for wav in alafasy husary minshawi noisy skip; do
-  for cfg in ${SIM_CONFIGS:-"P=0" "MIN_SEC=2.5 P=0" "MAX_SEC=15 P=0" "P=1"}; do
+  for cfg in ${SIM_CONFIGS:-"P=0" "MAX_SEC=7 P=1"}; do
     echo; echo "===== $wav | $cfg ====="
     P=$(echo "$cfg" | sed 's/.*P=//')
     env $(echo "$cfg" | sed 's/ *P=.//') node sim.js "$CLI" "$MODEL" "$wav.wav" 2:1 "$P" 2>/dev/null || echo "sim failed"
