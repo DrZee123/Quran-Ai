@@ -26,6 +26,8 @@ export default function SurahScreen() {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [heard, setHeard] = useState('');
+  const [timing, setTiming] = useState('');
   const [states, setStates] = useState<WordState[]>(() => expected.map(() => ({ status: 'pending' })));
   const [position, setPosition] = useState(0);
   const [selectedWord, setSelectedWord] = useState<number | null>(null);
@@ -64,10 +66,14 @@ export default function SurahScreen() {
     trackerRef.current = tracker;
     refresh();
     const rec = new Recognizer({
-      onText: (slice, text) => {
-        tracker.update(slice, text);
+      onText: (seg, text, final) => {
+        tracker.update(seg, text);
+        if (final) tracker.endSlice();
+        setHeard(text);
         refresh();
       },
+      getContext: () => tracker.recentText(),
+      onTiming: (ms, sec) => setTiming(`${(ms / 1000).toFixed(1)}s / ${sec.toFixed(1)}s awaz`),
       onError: (msg) => setError(msg),
       onActiveChange: (active) => setRecording(active),
     });
@@ -216,6 +222,12 @@ export default function SurahScreen() {
             </Text>
           </Pressable>
         ) : null}
+        {recording && heard ? (
+          <Text style={styles.heard} numberOfLines={1}>
+            AI ne suna: {heard}
+            {timing ? `   ·   ${timing}` : ''}
+          </Text>
+        ) : null}
         <View style={styles.bar}>
           <View style={{ flex: 1 }}>
             <Text style={styles.small}>Ayat {startAyah} se</Text>
@@ -244,6 +256,7 @@ export default function SurahScreen() {
 }
 
 const styles = StyleSheet.create({
+  heard: { fontSize: 12, color: colors.muted, textAlign: 'center', paddingHorizontal: 10, paddingTop: 6 },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',

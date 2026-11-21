@@ -108,3 +108,15 @@ describe('mushaf pages', () => {
     expect(t.mistakes).toBe(0);
   });
 });
+
+describe('live display', () => {
+  it('does not flash a wrong word before the reciter pauses', () => {
+    const t = new RecitationTracker(ikhlas);
+    t.update(0, 'قل هو الله واحد');
+    expect(t.states()[3].status).toBe('pending');
+    expect(t.position).toBe(3);
+    t.endSlice();
+    expect(t.states()[3]).toEqual({ status: 'wrong', heard: 'واحد' });
+    expect(t.recentText()).toBe('قل هو الله احد');
+  });
+});

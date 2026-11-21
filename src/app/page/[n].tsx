@@ -28,6 +28,8 @@ export default function MushafPageScreen() {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [heard, setHeard] = useState('');
+  const [timing, setTiming] = useState('');
   const [startWord, setStartWord] = useState(page.first);
   const [states, setStates] = useState<Map<number, WordState>>(new Map());
   const [shown, setShown] = useState(page.first); // words < shown are revealed
@@ -98,10 +100,14 @@ export default function MushafPageScreen() {
     setShown(startWord);
     setStates(new Map());
     const rec = new Recognizer({
-      onText: (slice, text) => {
-        tracker.update(slice, text);
+      onText: (seg, text, final) => {
+        tracker.update(seg, text);
+        if (final) tracker.endSlice();
+        setHeard(text);
         pullStates();
       },
+      getContext: () => tracker.recentText(),
+      onTiming: (ms, sec) => setTiming(`${(ms / 1000).toFixed(1)}s / ${sec.toFixed(1)}s awaz`),
       onError: setError,
       onActiveChange: setRecording,
     });
@@ -245,6 +251,12 @@ export default function MushafPageScreen() {
         ) : !recording && !error ? (
           <Text style={styles.hint}>Jis lafz se shuru karna hai us par tap karein, phir mic dabayen</Text>
         ) : null}
+        {recording && heard ? (
+          <Text style={styles.heard} numberOfLines={1}>
+            AI ne suna: {heard}
+            {timing ? `   ·   ${timing}` : ''}
+          </Text>
+        ) : null}
         <View style={styles.bar}>
           <Pressable onPress={() => goToPage(pageNo + 1, 1)} disabled={recording || pageNo >= PAGE_COUNT} hitSlop={10} style={styles.navBtn}>
             <Text style={[styles.link, (recording || pageNo >= PAGE_COUNT) && { opacity: 0.3 }]}>‹ Agla</Text>
@@ -274,6 +286,7 @@ export default function MushafPageScreen() {
 }
 
 const styles = StyleSheet.create({
+  heard: { fontSize: 12, color: colors.muted, textAlign: 'center', paddingHorizontal: 10, paddingTop: 6 },
   toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.card, borderBottomWidth: 1, borderColor: colors.border },
   segment: { flexDirection: 'row', borderRadius: 8, borderWidth: 1, borderColor: colors.primary, overflow: 'hidden' },
   segBtn: { paddingHorizontal: 12, paddingVertical: 6 },

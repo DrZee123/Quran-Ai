@@ -13,18 +13,18 @@ export interface SpeechModel {
 
 export const MODELS: SpeechModel[] = [
   {
-    id: 'quran-base',
+    id: 'quran-tiny',
     title: 'Quran model (tavsiya)',
     description:
-      'Whisper base, Quran tilawat par train kiya hua (tarteel-ai/whisper-base-ar-quran, Apache-2.0). Sab se behtar nataij.',
-    url: `https://github.com/${GITHUB_REPO}/releases/download/model-v1/ggml-quran-base-q8_0.bin`,
-    fileName: 'ggml-quran-base-q8_0.bin',
-    approxMB: 80,
+      'Whisper tiny, Quran tilawat par train kiya hua (tarteel-ai/whisper-tiny-ar-quran, Apache-2.0). Tez aur durust: test mein 100 mein se ~95 lafz sahih.',
+    url: `https://github.com/${GITHUB_REPO}/releases/download/model-v2/ggml-quran-tiny-q8_0.bin`,
+    fileName: 'ggml-quran-tiny-q8_0.bin',
+    approxMB: 42,
   },
   {
     id: 'general-base',
     title: 'General Arabic model',
-    description: 'OpenAI Whisper base (MIT). Agar Quran model download na ho to ye istemal karein. Kam durust.',
+    description: 'OpenAI Whisper base (MIT). Sirf backup: Quran tilawat par kaafi kam durust aur dheema.',
     url: 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q8_0.bin',
     fileName: 'ggml-base-q8_0.bin',
     approxMB: 80,
@@ -49,7 +49,8 @@ export function isDownloaded(model: SpeechModel): boolean {
 }
 
 export async function getSelectedModelId(): Promise<string> {
-  return (await AsyncStorage.getItem(SELECTED_KEY)) ?? MODELS[0].id;
+  const id = await AsyncStorage.getItem(SELECTED_KEY);
+  return id && MODELS.some((m) => m.id === id) ? id : MODELS[0].id;
 }
 
 export async function setSelectedModelId(id: string): Promise<void> {
@@ -58,7 +59,8 @@ export async function setSelectedModelId(id: string): Promise<void> {
 
 export async function getActiveModel(): Promise<SpeechModel | null> {
   const id = await getSelectedModelId();
-  const preferred = MODELS.find((m) => m.id === id);
+  // An id from an older app version (e.g. 'quran-base') falls back to the recommended model.
+  const preferred = MODELS.find((m) => m.id === id) ?? MODELS[0];
   if (preferred && isDownloaded(preferred)) return preferred;
   return MODELS.find(isDownloaded) ?? null;
 }
@@ -92,4 +94,14 @@ export async function downloadModel(
 export function deleteModel(model: SpeechModel): void {
   const f = modelFile(model);
   if (f.exists) f.delete();
+}
+
+/** Remove files of models that are no longer offered (e.g. the old base Quran model that didn't work). */
+export function cleanupOldModels(): void {
+  const keep = new Set(MODELS.map((m) => m.fileName));
+  for (const name of ['ggml-quran-base-q8_0.bin']) {
+    if (keep.has(name)) continue;
+    const f = new File(modelsDir(), name);
+    if (f.exists) f.delete();
+  }
 }

@@ -88,6 +88,15 @@ export function wordScore(heard: string, expected: string): number {
 /** Threshold above which a heard word counts as correctly recited. */
 export const MATCH_THRESHOLD = 0.8;
 
+/** Long words get a little more tolerance: the speech model often drops one letter of them. */
+export function thresholdFor(expected: string): number {
+  return expected.length >= 6 ? 0.72 : MATCH_THRESHOLD;
+}
+
+export function isMatch(score: number, expected: string): boolean {
+  return score >= thresholdFor(expected);
+}
+
 export function wordsMatch(heard: string, expected: string): boolean {
-  return wordScore(heard, expected) >= MATCH_THRESHOLD;
+  return isMatch(wordScore(heard, expected), expected);
 }
