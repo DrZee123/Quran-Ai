@@ -2,6 +2,8 @@ name: Benchmark speech models
 
 on:
   workflow_dispatch:
+  push:
+    paths: ['scripts/bench_*']
 
 jobs:
   bench:

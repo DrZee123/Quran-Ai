@@ -44,3 +44,4 @@ for model in models:
                 if ac == 0:
                     print(f"  {os.path.basename(model)} {c}: {dt:.2f}s WER {w:.2f} | {' '.join(hyp)}")
             print(f"== {os.path.basename(model)} audio_ctx={ac or 1500}: avg {tot_t/n:.2f}s/clip, WER {tot_w/n:.3f}")
+# trigger
