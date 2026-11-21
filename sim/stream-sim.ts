@@ -67,7 +67,9 @@ for (let i = 0; i < audio.length; i += 1600) {
 if (seg.hasSpeech) segments.push(seg.audio());
 
 for (const pcm of segments) {
+  const t0 = Date.now();
   const text = transcribe(pcm, usePrompt ? tracker.recentText() : '');
+  const ms = Date.now() - t0;
   const before = tracker.position;
   tracker.update(index, text);
   tracker.endSlice();
@@ -75,7 +77,7 @@ for (const pcm of segments) {
   const st = tracker.states();
   const span = [];
   for (let k = before; k < after; k++) span.push(`${norm[k]}${st[k].status === 'correct' ? '' : st[k].status === 'wrong' ? `[X:${st[k].heard}]` : '[SKIP]'}`);
-  console.log(`seg ${index} ${(pcm.length / SAMPLE_RATE).toFixed(1)}s | heard: ${text} | -> ${span.join(' ')}`);
+  console.log(`seg ${index} ${(pcm.length / SAMPLE_RATE).toFixed(1)}s ${ms}ms | heard: ${text} | -> ${span.join(' ')}`);
   index++;
 }
 const st = tracker.states().slice(gStart, tracker.position);
