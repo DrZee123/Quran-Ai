@@ -1,0 +1,28 @@
+name: Convert speech model
+
+# Run once by hand (Actions tab -> "Convert speech model" -> Run workflow).
+# Publishes the phone-ready model as a GitHub release asset that the app downloads.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Convert and quantise
+        run: ./scripts/convert_model.sh
+      - name: Publish release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view model-v1 >/dev/null 2>&1 || \
+            gh release create model-v1 --title "Speech model v1" \
+              --notes "tarteel-ai/whisper-base-ar-quran (Apache-2.0) converted to whisper.cpp GGML q8_0."
+          gh release upload model-v1 out/ggml-quran-base-q8_0.bin --clobber
