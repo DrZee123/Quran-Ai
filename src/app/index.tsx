@@ -1,11 +1,13 @@
 import { Link, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SURAHS } from '../lib/quran';
+import { PAGE_COUNT, SURAHS, getPage } from '../lib/quran';
 import { colors, quranFont } from '../theme';
 
 export default function SurahList() {
   const [q, setQ] = useState('');
+  const [tab, setTab] = useState<'surah' | 'page'>('surah');
+  const pages = useMemo(() => Array.from({ length: PAGE_COUNT }, (_, i) => i + 1), []);
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return SURAHS;
@@ -27,6 +29,31 @@ export default function SurahList() {
           ),
         }}
       />
+      <View style={styles.tabs}>
+        {(['surah', 'page'] as const).map((t) => (
+          <Pressable key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabOn]}>
+            <Text style={[styles.tabText, tab === t && { color: '#fff' }]}>{t === 'surah' ? 'Surah' : 'Mushaf safhaat (604)'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {tab === 'page' ? (
+        <FlatList
+          data={pages}
+          keyExtractor={(p) => String(p)}
+          initialNumToRender={20}
+          renderItem={({ item }) => (
+            <Link href={{ pathname: '/page/[n]', params: { n: String(item) } }} asChild>
+              <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}>
+                <View style={styles.num}>
+                  <Text style={styles.numText}>{item}</Text>
+                </View>
+                <Text style={[styles.tr, { flex: 1 }]}>{getPage(item).sections.map((s) => s.surah.tr).join(' · ')}</Text>
+              </Pressable>
+            </Link>
+          )}
+        />
+      ) : (
+      <>
       <TextInput
         placeholder="Surah talash karein (naam ya number)"
         placeholderTextColor={colors.muted}
@@ -55,11 +82,17 @@ export default function SurahList() {
           </Link>
         )}
       />
+      </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  tabs: { flexDirection: 'row', marginHorizontal: 12, marginTop: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, overflow: 'hidden' },
+  tab: { flex: 1, paddingVertical: 9, alignItems: 'center' },
+  tabOn: { backgroundColor: colors.primary },
+  tabText: { color: colors.primary, fontWeight: '700' },
   search: {
     margin: 12,
     paddingHorizontal: 14,

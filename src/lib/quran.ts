@@ -75,3 +75,96 @@ export function getSurah(id: number): { meta: SurahMeta; ayahs: Ayah[]; words: Q
 export function toArabicDigits(n: number): string {
   return String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
 }
+
+// ---------------------------------------------------------------------------
+// Mushaf pages (Madani layout, 604 pages)
+
+import pageStarts from '../data/pages.json';
+
+export const PAGE_COUNT = 604;
+const PAGE_STARTS = pageStarts as number[]; // global 1-based ayah id of each page's first ayah (+ sentinel)
+
+export interface GlobalWord extends QuranWord {
+  surah: number;
+  /** Index in the flattened word list of the whole Quran. */
+  gIndex: number;
+}
+
+let allWords: GlobalWord[] | null = null;
+let ayahFirstWord: number[] | null = null; // global ayah id (1-based) -> first gIndex
+
+/** Every word of the Quran in order (built once, ~78k words). */
+export function getAllWords(): GlobalWord[] {
+  if (!allWords) {
+    allWords = [];
+    ayahFirstWord = [0];
+    for (const s of SURAHS) {
+      for (const a of getSurah(s.id).ayahs) {
+        ayahFirstWord.push(allWords.length);
+        for (const w of a.words) allWords.push({ ...w, surah: s.id, gIndex: allWords.length });
+      }
+    }
+    ayahFirstWord.push(allWords.length); // sentinel for ayah 6237
+  }
+  return allWords;
+}
+
+export interface PageSection {
+  surah: SurahMeta;
+  /** True when the surah starts on this page (show its title and basmala). */
+  starts: boolean;
+  ayahs: { number: number; words: GlobalWord[] }[];
+}
+
+export interface MushafPage {
+  page: number;
+  sections: PageSection[];
+  /** Global word range [first, end). */
+  first: number;
+  end: number;
+}
+
+/** Page number (1..604) that contains a surah's ayah. */
+export function pageOf(surah: number, ayah = 1): number {
+  getAllWords();
+  let id = ayah;
+  for (let s = 1; s < surah; s++) id += SURAHS[s - 1].verseCount;
+  let p = 1;
+  while (p < PAGE_COUNT && PAGE_STARTS[p] <= id) p++;
+  return p;
+}
+
+const pageCache = new Map<number, MushafPage>();
+
+export function getPage(page: number): MushafPage {
+  const cached = pageCache.get(page);
+  if (cached) return cached;
+  const words = getAllWords();
+  const first = ayahFirstWord![PAGE_STARTS[page - 1]];
+  const end = ayahFirstWord![PAGE_STARTS[page]];
+  const sections: PageSection[] = [];
+  for (let i = first; i < end; i++) {
+    const w = words[i];
+    let sec = sections[sections.length - 1];
+    if (!sec || sec.surah.id !== w.surah) {
+      sec = { surah: SURAHS[w.surah - 1], starts: w.ayah === 1 && w.index === 0, ayahs: [] };
+      sections.push(sec);
+    }
+    let ay = sec.ayahs[sec.ayahs.length - 1];
+    if (!ay || ay.number !== w.ayah) {
+      ay = { number: w.ayah, words: [] };
+      sec.ayahs.push(ay);
+    }
+    ay.words.push(w);
+  }
+  const result = { page, sections, first, end };
+  pageCache.set(page, result);
+  return result;
+}
+
+/** Normalised words of the whole Quran (for tracking a recitation across pages). */
+let allNorm: string[] | null = null;
+export function getAllNormalized(): string[] {
+  if (!allNorm) allNorm = getAllWords().map((w) => w.norm);
+  return allNorm;
+}

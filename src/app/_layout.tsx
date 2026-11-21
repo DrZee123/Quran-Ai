@@ -25,6 +25,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ title: 'Hifz Saathi' }} />
         <Stack.Screen name="surah/[id]" options={{ title: '' }} />
+        <Stack.Screen name="page/[n]" options={{ title: 'Safha' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings / Model' }} />
       </Stack>
     </>
