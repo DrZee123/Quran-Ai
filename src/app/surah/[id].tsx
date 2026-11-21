@@ -72,7 +72,6 @@ export default function SurahScreen() {
         setHeard(text);
         refresh();
       },
-      getContext: () => tracker.recentText(),
       onTiming: (ms, sec) => setTiming(`${(ms / 1000).toFixed(1)}s / ${sec.toFixed(1)}s awaz`),
       onError: (msg) => setError(msg),
       onActiveChange: (active) => setRecording(active),

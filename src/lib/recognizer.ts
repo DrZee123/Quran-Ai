@@ -12,8 +12,6 @@ export interface RecognizerCallbacks {
   onText: (segment: number, text: string, final: boolean) => void;
   onError: (message: string) => void;
   onActiveChange: (active: boolean) => void;
-  /** Words already recited correctly, given to the model as context (not the upcoming text). */
-  getContext?: () => string;
   /** Debug: how long the last model run took (ms) and the audio length (s). */
   onTiming?: (ms: number, audioSec: number) => void;
 }
@@ -150,12 +148,13 @@ export class Recognizer {
   private async transcribe(audio: Int16Array): Promise<string> {
     if (!this.ctx) return '';
     const t0 = Date.now();
+    // No prompt: giving the model the previous words made it repeat them
+    // instead of transcribing what was said (tested on real recitations).
     const options = {
       language: 'ar',
       maxThreads: 4,
       temperature: 0,
       temperatureInc: 0, // no slow re-decoding fallbacks
-      prompt: this.cb.getContext?.() || undefined,
     };
     const { promise } = this.ctx.transcribeData(audio.buffer as ArrayBuffer, options);
     const res = await promise;

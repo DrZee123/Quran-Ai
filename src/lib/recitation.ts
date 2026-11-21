@@ -66,6 +66,8 @@ export class RecitationTracker {
   private sliceIndex = -1;
   private sliceText = '';
   private live: { states: Map<number, WordState>; cursor: number } | null = null;
+  /** Last heard word of the previous segment when it did not match (often half a word). */
+  private carry = '';
 
   constructor(expected: string[], startIndex = 0) {
     this.expected = expected;
@@ -105,18 +107,47 @@ export class RecitationTracker {
     return words;
   }
 
-  private evaluate(text: string, final: boolean) {
-    const heard = this.prepare(text, final);
-    const res = align(heard, this.window(this.cursor, heard.length));
-    const states = new Map<number, WordState>();
-    res.words.forEach((w, k) => states.set(this.cursor + k, { status: w.status, heard: w.heard }));
-    return { states, cursor: this.cursor + res.consumed };
+  /**
+   * Heard words of a slice. A word left unmatched at the end of the previous
+   * segment is usually cut in half by the segment boundary: join it with the
+   * first word of this slice when that makes the expected word.
+   */
+  private heardWords(text: string, final: boolean): string[] {
+    const words = this.prepare(text, final);
+    if (!this.carry || words.length === 0) return words;
+    const next = this.expected[this.cursor];
+    const joined = this.carry + words[0];
+    if (next && wordsMatch(joined, next) && !wordsMatch(words[0], next)) return [joined, ...words.slice(1)];
+    return [this.carry, ...words];
   }
 
+  private evaluate(text: string, final: boolean) {
+    const heard = this.heardWords(text, final);
+    const window = this.window(this.cursor, heard.length);
+    const res = align(heard, window);
+    const states = new Map<number, WordState>();
+    res.words.forEach((w, k) => states.set(this.cursor + k, { status: w.status, heard: w.heard }));
+    return { states, cursor: this.cursor + res.consumed, heard, window, res };
+  }
+
+  /**
+   * Make a slice final. Only words up to the last correctly heard word are
+   * decided: a mistake must be followed by a correct word before it turns red.
+   * Unmatched words at the end of a slice are usually a word cut by the
+   * segment boundary or noise, and the next slice decides them.
+   */
   private commit(text: string): void {
-    const { states, cursor } = this.evaluate(text, true);
-    states.forEach((s, idx) => (this.committed[idx] = s));
-    this.cursor = cursor;
+    const { heard, window, res } = this.evaluate(text, true);
+    if (heard.length === 0) return;
+    let last = -1;
+    res.words.forEach((w, k) => {
+      if (w.status === 'correct') last = k;
+    });
+    for (let k = 0; k <= last; k++) this.committed[this.cursor + k] = res.words[k];
+    const tail = heard[heard.length - 1];
+    const tailMatched = last >= 0 && tail !== undefined && wordsMatch(tail, window[last]);
+    this.carry = tail !== undefined && !tailMatched ? tail : '';
+    this.cursor += last + 1;
   }
 
   /** Close the current slice now (the reciter paused): its words become final. */
